@@ -1,4 +1,4 @@
-## Oliveira_et_al_2024_Demo:
+## Oliveira_et_al_2024_V_Demo:
 This repository pertains to the manuscript "Statistical Design of a Synthetic Bacterial Community that Clears a multi-drug Resistant gut 
 pathogen."
 

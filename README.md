@@ -1,6 +1,18 @@
-## Oliveira_et_al_2024
+## Oliveira_et_al_2024_Demo:
 This repository pertains to the manuscript "Statistical Design of a Synthetic Bacterial Community that Clears a multi-drug Resistant gut 
 pathogen."
+
+
+___________________________________________________________________________________________________________________________________
+### Demonstration:
+There are two different Demo:
+#### 1. Demo_on_Real_Data [Runtime 5 minutes]
+This folder contains a demonstration of the construction of Strain and metabolite landscapes using the PCA projections of the real dataset. These diagrams can also be found in our manuscript.
+
+#### 2. Demo_on_Synthetic_Data: [Runtime 5 minutes]
+This folder contains a demonstration of PCA Analysis, Metabolite RF modeling, and PCA landscape construction on the synthetic datasets. These synthetic datasets are of the same size and similar nature as the real dataset. The results here are solely for pedagogical demonstration of our code. No part of these datasets and results generated have been used in our analysis and the manuscript.
+____________________________________________________________________________________________________________________________________
+
 
 ____________________________________________________________________________
 ### Installation:
@@ -12,8 +24,6 @@ ____________________________________________________________________________
 2. Alternatively, go to the link (https://github.com/aramanlab/Oliveira_et_al_2024_V_Demo.git) And download the zip file.
 
 Installation/Download Time: 1 minute. 
-
-
 _____________________________________________________________________________
 
 ### Datasets:
@@ -22,11 +32,6 @@ ____________________________________________________________________________
 
 1. PCA_coordinates_Metabolite_space_original_81_actual.csv -------       [Metabolite_Space_Principal_component_landscape.ipynb => Output]
 2. PCA_coordinates_Strain_Presence_Absence_Space_Original_96_actual.csv -------   [Strain_Space_Principal_component_landscape.ipynb => Output] 
-3. Strain_pool_66_DFI_with_umap_coordinates.xlsx-------     [Input =>  Umap_based_design_of_96_communities.R]
-
-4. metadata_16s.xlsx --------                [Input => Fig3D_and_3E.Rmd],[Input => Fig3F_taxplot.R]
-5. 16S_phyloseq.rds --------                [Input => Fig3D_and_3E.Rmd]
-6. 16S_otu_pctseqs.csv-------               [Input => Fig3F_taxplot.R]
 
 ___________________________________________________________________
 #### Upon Publication, the repository will also contain:
@@ -75,14 +80,7 @@ ________________________________________________________________________________
   1. R-script for generating taxonomy plot from 16S data [Fig3F_taxplot.R]
   2. R-markdown for computing alpha and beta diversities from 16S data [Fig3D_and_3E.Rmd]
 ___________________________________________________________________________________________________________________________________
-___________________________________________________________________________________________________________________________________
-### Demonstration:
-There are two different Demo:
-#### 1. Demo_on_Real_Data [Runtime 5 minutes]
-This folder contains a demonstration of the construction of Strain and metabolite landscapes using the PCA projections of the real dataset. These diagrams can also be found in our manuscript.
 
-#### 2. Demo_on_Synthetic_Data: [Runtime 5 minutes]
-This folder contains a demonstration of PCA Analysis, Metabolite RF modeling, and PCA landscape construction on the synthetic datasets. These synthetic datasets are of the same size and similar nature as the real dataset. The results here are solely for pedagogical demonstration of our code. No part of these datasets and results generated have been used in our analysis and the manuscript.
 
 ____________________________________________________________________________________________________________________
 ____________________________________________________________________________________________________________________

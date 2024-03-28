@@ -42,7 +42,7 @@ Strain presence-absence vs KP CFU for Original and out-of-sample experiments:
 
 Metabolite Z score vs KP CFU for Original and out-of-sample experiments:
 1. Metabolite_120_Hr_dataset.csv-------[Input => RF_Model_Metabolites.ipynb, Metabolite_Space_Principal_component_landscape.ipynb]
-2. Metabolite_120_Hrs_OOS_set_log10_CFU.csv-------[Input => \rightarrow$  RF_Model_Metabolites.ipynb]
+2. Metabolite_120_Hrs_OOS_set_log10_CFU.csv-------[Input => RF_Model_Metabolites.ipynb]
    
 ________________________________________________________________________________________
 
@@ -62,25 +62,7 @@ ________________________________________________________________________________
      <br /> - Trained on original 96 experiments
      <br /> - Tested on 60 Out-of-sample experiments 
 
-#### Author: Robert Y. Chen [Windows 11 R 4.3.1] 
-  1. R-script for synthetic community analysis [Robert_Script_for_Synthetic_Community_Analysis.R] 
-
-#### Author: Kiseok Lee [Mac OS 14.4 R 4.0.3] 
-  1. R-script for designing the original 96 communities from UMAP [Umap_based_design_of_96_communities.R] [Runtime 30 minutes]
-
-#### Author: Mahmoud Yousef [Mac OS 14.4 Python 3.10.13]:
-  Major Package Detail: scikit-learn[1.3.0],
-  1. Jupyter Notebook to construct a Random Forest Model on Strains to predict KP suppression [RF_model_on_strains.ipynb]
-        <br /> - Trained on original 96 experiments                     [Runtime 2 minutes]
-        <br /> - Validated on 60 Out-of-sample experiments              [Runtime 2 minutes]
-        <br /> - Exploration of 1,000,000 in-silico experiments         [Runtime 40 minutes]
-
-
-#### Author: Ramanujam Ramaswamy: [Mac OS 14.4 R 4.2.2]
-  1. R-script for generating taxonomy plot from 16S data [Fig3F_taxplot.R]
-  2. R-markdown for computing alpha and beta diversities from 16S data [Fig3D_and_3E.Rmd]
 ___________________________________________________________________________________________________________________________________
-
 
 ____________________________________________________________________________________________________________________
 ____________________________________________________________________________________________________________________

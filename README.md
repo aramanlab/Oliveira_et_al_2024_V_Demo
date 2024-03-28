@@ -25,9 +25,9 @@ ____________________________________________________________________________
 3. Strain_pool_66_DFI_with_umap_coordinates.xlsx-------     [Input =>  Umap_based_design_of_96_communities.R]
 4. Validation_60_Communities.xlsx  -------   [Input => RF_model_on_strains.ipynb]
 5. metadata_16s.xlsx --------                [Input => Fig3D_and_3E.Rmd]
-6. metadata_16s.xlsx--------                [Input => Fig3F_taxplot.R]
-7. 16S_phyloseq.rds --------                [Input => Fig3D_and_3E.Rmd]
-8. 16S_otu_pctseqs.csv-------               [Input => Fig3F_taxplot.R]
+   metadata_16s.xlsx--------                [Input => Fig3F_taxplot.R]
+6. 16S_phyloseq.rds --------                [Input => Fig3D_and_3E.Rmd]
+7. 16S_otu_pctseqs.csv-------               [Input => Fig3F_taxplot.R]
 
 ___________________________________________________________________
 #### Upon Publication, the repository will also contain:

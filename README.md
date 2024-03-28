@@ -12,11 +12,7 @@ ____________________________________________________________________________
 2. Alternatively, go to the link https://github.com/aramanlab/Oliveira_et_al_2024.git. And download the zip file.
 
 Installation/Download Time: 1 minute. 
-_____________________________________________________________________________
-### Pseudocodes:
-Pseudocodes describing the overarching steps in the calculations can be found in the Pseudocodes folder as well as folders with notebooks.
-They also contain Run times for the codes they describe.
-_____________________________________________________________________________
+
 
 _____________________________________________________________________________
 
@@ -24,8 +20,6 @@ _____________________________________________________________________________
 This repository contains the following datasets:
 ____________________________________________________________________________
 
-
-   
 1. PCA_coordinates_Metabolite_space_original_81.csv -------       [Metabolite_Space_Principal_component_landscape.ipynb => Output]
 2. PCA_coordinates_Strain_Presence_Absence_Space_Original_96.csv -------   [Strain_Space_Principal_component_landscape.ipynb => Output] 
 3. Strain_pool_66_DFI_with_umap_coordinates.xlsx-------     [Input =>  Umap_based_design_of_96_communities.R]
@@ -37,7 +31,7 @@ ____________________________________________________________________________
 9. 16S_otu_pctseqs.csv-------               [Input => Fig3F_taxplot.R]
 
 ___________________________________________________________________
-Upon Publication, the repository will also contain:
+#### Upon Publication, the repository will also contain:
 
 Strain presence-absence vs KP CFU for Original and out-of-sample experiments:
 1. consortia_taxa_presence_and_KpCFUs.csv-------[Iput => RF_Model_Metabolites.ipynb, Strain_Space_Principal_component_landscape.ipynb]
@@ -47,8 +41,10 @@ Metabolite Z score vs KP CFU for Original and out-of-sample experiments:
 1. Metabolite_120_Hr_dataset.csv-------[Input => RF_Model_Metabolites.ipynb, Metabolite_Space_Principal_component_landscape.ipynb]
 2. Metabolite_120_Hrs_OOS_set_log10_CFU.csv-------[Input => \rightarrow$  RF_Model_Metabolites.ipynb]
    
-____________________________________________________________________
-____________________________________________________________________
+________________________________________________________________________________________
+
+________________________________________________________________________________________
+________________________________________________________________________________________
 ### Python/R Notebooks and Scripts:
 This repository contains the following notebooks:
 ________________________________________________________________________________________
@@ -81,7 +77,7 @@ ________________________________________________________________________________
   1. R-script for generating taxonomy plot from 16S data [Fig3F_taxplot.R]
   2. R-markdown for computing alpha and beta diversities from 16S data [Fig3D_and_3E.Rmd]
 ___________________________________________________________________________________________________________________________________
-
+___________________________________________________________________________________________________________________________________
 ### Demonstration:
 There are two different Demo:
 #### 1. Demo_on_Real_Data [Runtime 5 minutes]
@@ -90,8 +86,12 @@ This folder contains a demonstration of the construction of Strain and metabolit
 #### 2. Demo_on_Synthetic_Data: [Runtime 5 minutes]
 This folder contains a demonstration of PCA Analysis, Metabolite RF modeling, and PCA landscape construction on the synthetic datasets. These synthetic datasets are of the same size and similar nature as the real dataset. The results here are solely for pedagogical demonstration of our code. No part of these datasets and results generated have been used in our analysis and the manuscript.
 
-_______________________________________________________________________________
-                    
+____________________________________________________________________________________________________________________
+____________________________________________________________________________________________________________________
+### Pseudocodes:
+Pseudocodes describing the overarching steps in the calculations can be found in the Pseudocodes folder and the folders with notebooks.
+They also contain Run times for the codes they describe.
+____________________________________________________________________________________________________________________                  
                     
 
 

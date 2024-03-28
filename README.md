@@ -3,7 +3,7 @@ This repository pertains to the manuscript "Statistical Design of a Synthetic Ba
 pathogen."
 
 ____________________________________________________________________________
-#### Installation:
+### Installation:
 
 1. In your terminal type and execute the following:
           git clone https://github.com/aramanlab/Oliveira_et_al_2024_ver_2.git

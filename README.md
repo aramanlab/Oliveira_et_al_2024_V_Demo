@@ -23,11 +23,11 @@ ____________________________________________________________________________
 1. PCA_coordinates_Metabolite_space_original_81_actual.csv -------       [Metabolite_Space_Principal_component_landscape.ipynb => Output]
 2. PCA_coordinates_Strain_Presence_Absence_Space_Original_96_actual.csv -------   [Strain_Space_Principal_component_landscape.ipynb => Output] 
 3. Strain_pool_66_DFI_with_umap_coordinates.xlsx-------     [Input =>  Umap_based_design_of_96_communities.R]
-4. Validation_60_Communities.xlsx  -------   [Input => RF_model_on_strains.ipynb]
-5. metadata_16s.xlsx --------                [Input => Fig3D_and_3E.Rmd]
+
+4. metadata_16s.xlsx --------                [Input => Fig3D_and_3E.Rmd]
    metadata_16s.xlsx--------                [Input => Fig3F_taxplot.R]
-6. 16S_phyloseq.rds --------                [Input => Fig3D_and_3E.Rmd]
-7. 16S_otu_pctseqs.csv-------               [Input => Fig3F_taxplot.R]
+5. 16S_phyloseq.rds --------                [Input => Fig3D_and_3E.Rmd]
+6. 16S_otu_pctseqs.csv-------               [Input => Fig3F_taxplot.R]
 
 ___________________________________________________________________
 #### Upon Publication, the repository will also contain:

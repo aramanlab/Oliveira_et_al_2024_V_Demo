@@ -1,0 +1,467 @@
+---
+title: "Kp Suppression In-vivo"
+author: ""
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = F)
+library(phyloseq)
+library(yingtools2)
+library(vegan)
+library(tidyverse)
+library(here)
+library(readxl)
+library(future.apply)
+library(caret)
+library(mirlyn)
+library(msa)
+library(patchwork)
+```
+
+```{r functions}
+
+# Add metadata variables to phyloseq metadata
+phyloseq_add_metadata = function(ps, df_meta)
+{
+  df_meta = df_meta[, !(colnames(df_meta) %in% colnames(sample_data(ps)))]
+  temp = as(sample_data(ps), "matrix") %>% 
+    as.data.frame() %>% 
+    rownames_to_column("sample") %>% 
+    mutate(sample_id = gsub(".*_", "", sample)) %>% 
+    left_join(df_meta, by="sample_id") %>% 
+    column_to_rownames("sample")
+  sample_data(ps) = temp
+  return(ps)
+}
+
+
+# Sparse features filter +++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+plot_sparse_features = function(mat, start, end, step, cutoff = 1)
+{
+  temp = future_sapply(seq(start, end, by=step), function(x) {
+    c(x, ncol(mat[, colSums(mat) <= x]))
+    })
+  
+  df_sparse_features_stats = data.frame(threshold = temp[1, ], sparse_features = temp[2, ])
+
+  df_sparse_features_stats %>%
+    mutate(sparse_features = as.numeric(sparse_features),
+           per = paste0(round(sparse_features/ncol(mat)*100, 1), "%")) %>%
+    arrange(threshold) %>%
+    mutate(filtered = ifelse(threshold <= cutoff, "yes", "no")) %>% 
+    mutate(filtered = factor(filtered, levels = c("yes", "no"))) %>% 
+    mutate(threshold = factor(threshold, levels = unique(threshold))) %>%
+    ggplot(aes(x=threshold, y=sparse_features, fill = filtered)) +
+    geom_col() +
+    theme_bw() +
+    theme(legend.position = "none") +
+    scale_fill_manual(values = c("darkred", "grey40")) +
+    labs(x="Threshold", y="# sparse features", 
+         caption = "y-axis: # features with column-sums <= threshold") +
+    annotate(geom="text", label = paste0("Total features: ", ncol(mat)), x=2, y=ncol(mat), vjust="inward", hjust="inward")
+}
+
+
+sparse_features_filter = function(mat, cutoff=1)
+{
+  num_sparse_features = ncol(mat[, colSums(mat) <= cutoff])
+  cat(num_sparse_features, "features removed with column sums <= ", cutoff, ".\n")
+  mat = mat[, colSums(mat) > cutoff]
+  return(mat)
+}
+
+
+# Prevalence filter +++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+plot_prevalence_stats = function(mat, start, end, cutoff=1)
+{
+  temp = data.frame(num_samples = colSums(mat > 0)) %>% 
+    arrange(num_samples) %>% 
+    group_by(num_samples) %>% 
+    dplyr::count(num_samples) %>% 
+    ungroup() %>% 
+    mutate(cum_sum = cumsum(n))
+  
+  temp %>%
+    filter(num_samples >= start) %>% 
+    filter(num_samples <= end) %>% 
+    mutate(filtered = ifelse(num_samples <= cutoff, "yes", "no")) %>% 
+    mutate(filtered = factor(filtered, levels = c("yes", "no"))) %>% 
+    mutate(num_samples = factor(num_samples, levels = unique(num_samples))) %>% 
+    ggplot(aes(x=num_samples, y=cum_sum, fill = filtered)) +
+    geom_col() +
+    scale_fill_manual(values = c("darkred", "grey40")) +
+    theme_bw() +
+    theme(legend.position = "none") +
+    labs(x="# samples threshold", y="# features", 
+         caption = "y-axis: # features having non-zero values in <= x many samples")
+}
+
+prevalence_filter = function(mat, threshold)
+{
+  num_less_prev_features = ncol(mat[, colSums(mat > 0) <= threshold])
+  cat(num_less_prev_features, "/", ncol(mat), "features removed with non-zero value in <=", threshold, "samples.\n")
+
+  mat = mat[, colSums(mat > 0) > threshold]
+  return(mat)
+}
+
+
+# Low-variance filter +++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+nzv_filter = function(mat)
+{
+  temp = nearZeroVar(mat, saveMetrics= TRUE)
+  
+  if(!any(temp$nzv))
+  {
+    plot = "No zero variance or near zero variance features found"
+  } else {
+    plot = temp %>% 
+      ggplot(aes(x = freqRatio, y = percentUnique, color = nzv)) +
+      geom_point() +
+      theme_bw() +
+      labs(color='Near zero variance',
+           caption = paste0("# nzv features = ", nrow(temp %>% filter(nzv==TRUE))))
+  
+    var_filtered_names = rownames(temp %>% filter(nzv==F & zeroVar==F))
+  
+    message = paste(length(var_filtered_names), "/",  ncol(mat), "features remaining after nzv filter.")
+    mat = mat[, colnames(mat) %in% var_filtered_names]
+  }
+  return(list(plot, mat, message))
+}
+
+
+# Beta diversity plots +++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+
+generate_bray_pcoa_plot = function(df_bray_pcoa, color_var, shape_var, n_reps)
+{
+  df_bray_pcoa[[color_var]] = factor(df_bray_pcoa[[color_var]], levels = unique(df_bray_pcoa[[color_var]]))
+  df_bray_pcoa[[shape_var]] = factor(df_bray_pcoa[[shape_var]], levels = unique(df_bray_pcoa[[shape_var]]))
+  
+  plot_bray_pcoa = df_bray_pcoa %>% 
+    ggplot(aes(x = Axis.1, y = Axis.2, color = eval(as.name(color_var)), shape = eval(as.name(shape_var)))) +
+    geom_point(size=3, alpha = 0.65) +
+    theme_bw() +
+    theme(panel.grid = element_blank()) +
+    ggtitle("Bray-Curtis PCoA") +
+    labs(x = paste0("Axis 1 (", round(mean(df_bray_pcoa$per_var1)), "%)"),
+         y = paste0("Axis 2 (", round(mean(df_bray_pcoa$per_var2)), "%)"),
+         color = color_var,
+         shape = shape_var)
+
+  return(plot_bray_pcoa)
+}
+
+generate_bray_nmds_plot = function(df_bray_nmds, color_var, shape_var, n_reps)
+{
+  df_bray_nmds[[color_var]] = factor(df_bray_nmds[[color_var]], levels = unique(df_bray_nmds[[color_var]]))
+  df_bray_pcoa[[shape_var]] = factor(df_bray_pcoa[[shape_var]], levels = unique(df_bray_pcoa[[shape_var]]))
+  
+  plot_bray_nmds = df_bray_nmds %>% 
+    ggplot(aes(x = NMDS1, y = NMDS2, color = eval(as.name(color_var)), shape = eval(as.name(shape_var)))) +
+    geom_point(size=3, alpha = 0.65) +
+    theme_bw() +
+    theme(panel.grid = element_blank()) +
+    ggtitle("Bray-Curtis NMDS") +
+    labs(x = "NMDS 1",
+         y = "NMDS 2",
+         color = color_var,
+         shape = shape_var)
+
+  return(plot_bray_nmds)
+}
+
+
+generate_wuni_pcoa_plot = function(df_wuni_pcoa, color_var, shape_var, n_reps)
+{
+  df_wuni_pcoa[[color_var]] = factor(df_wuni_pcoa[[color_var]], levels = unique(df_wuni_pcoa[[color_var]]))
+  df_bray_pcoa[[shape_var]] = factor(df_bray_pcoa[[shape_var]], levels = unique(df_bray_pcoa[[shape_var]]))
+  
+  plot_wuni_pcoa = df_wuni_pcoa %>% 
+    ggplot(aes(x = Axis.1, y = Axis.2, color = eval(as.name(color_var)), shape = eval(as.name(shape_var)))) +
+    geom_point(size=3, alpha = 0.65) +
+    theme_bw() +
+    theme(panel.grid = element_blank()) +
+    ggtitle("Weighted Unifrac PCoA") +
+    labs(x = paste0("Axis 1 (", round(mean(df_wuni_pcoa$per_var1)), "%)"),
+         y = paste0("Axis 2 (", round(mean(df_wuni_pcoa$per_var2)), "%)"),
+         color = color_var,
+         shape = shape_var)
+
+  return(plot_wuni_pcoa)
+}
+
+generate_wuni_nmds_plot = function(df_wuni_nmds, color_var, shape_var, n_reps)
+{
+  df_wuni_nmds[[color_var]] = factor(df_wuni_nmds[[color_var]], levels = unique(df_wuni_nmds[[color_var]]))
+  df_bray_pcoa[[shape_var]] = factor(df_bray_pcoa[[shape_var]], levels = unique(df_bray_pcoa[[shape_var]]))
+  
+  plot_wuni_nmds = df_wuni_nmds %>% 
+    ggplot(aes(x = NMDS1, y = NMDS2, color = eval(as.name(color_var)))) +
+    geom_point(size=3, alpha = 0.65) +
+    theme_bw() +
+    theme(panel.grid = element_blank()) +
+    ggtitle("Weighted Unifrac NMDS") +
+    labs(x = "NMDS 1",
+         y = "NMDS 2",
+         color = color_var,
+         shape = shape_var)
+
+  return(plot_wuni_nmds)
+}
+
+generate_uni_pcoa_plot = function(df_uni_pcoa, color_var, shape_var, n_reps)
+{
+  df_uni_pcoa[[color_var]] = factor(df_uni_pcoa[[color_var]], levels = unique(df_uni_pcoa[[color_var]]))
+  df_bray_pcoa[[shape_var]] = factor(df_bray_pcoa[[shape_var]], levels = unique(df_bray_pcoa[[shape_var]]))
+  
+  plot_uni_pcoa = df_uni_pcoa %>% 
+    ggplot(aes(x = Axis.1, y = Axis.2, color = eval(as.name(color_var)), shape = eval(as.name(shape_var)))) +
+    geom_point(size=3, alpha = 0.65) +
+    theme_bw() +
+    theme(panel.grid = element_blank()) +
+    ggtitle("Unweighted Unifrac PCoA") +
+    labs(x = paste0("Axis 1 (", round(mean(df_uni_pcoa$per_var1)), "%)"),
+         y = paste0("Axis 2 (", round(mean(df_uni_pcoa$per_var2)), "%)"),
+         color = color_var,
+         shape = shape_var)
+
+  return(plot_uni_pcoa)
+}
+
+generate_uni_nmds_plot = function(df_uni_nmds, color_var, shape_var, n_reps)
+{
+  df_uni_nmds[[color_var]] = factor(df_uni_nmds[[color_var]], levels = unique(df_uni_nmds[[color_var]]))
+  df_bray_pcoa[[shape_var]] = factor(df_bray_pcoa[[shape_var]], levels = unique(df_bray_pcoa[[shape_var]]))
+  
+  plot_uni_nmds = df_uni_nmds %>% 
+    ggplot(aes(x = NMDS1, y = NMDS2, color = eval(as.name(color_var)), shape = eval(as.name(shape_var)))) +
+    geom_point(size=3, alpha = 0.65) +
+    theme_bw() +
+    theme(panel.grid = element_blank()) +
+    ggtitle("Unweighted Unifrac NMDS") +
+    labs(x = "NMDS 1",
+         y = "NMDS 2",
+         color = color_var,
+         shape = shape_var)
+
+  return(plot_uni_nmds)
+}
+
+```
+
+
+```{r}
+
+# Make sure to navigate to the working directory with the folder "Datasets"
+
+df_meta = read_excel("Datasets", "metadata_16s.xlsx") %>% 
+  mutate(sample_id = gsub("_", "\\.", sample_id)) %>% 
+  select(sample_id, experiment.number = experiment, day, mouse, condition = group)
+
+ps = readRDS("Datasets", "16S_phyloseq.rds")
+ps = phyloseq_add_metadata(ps, df_meta)
+
+```
+
+```{r set-parameters}
+# Set parameters
+readcounts_cutoff = 1000
+sparse_features_cutoff = 5
+prevalence_cutoff = 1
+lib_size_cutoff = 2000
+seed_value = 333
+n_reps=1
+```
+
+
+## Sample Readcount
+```{r, fig.height=5, fig.width=15}
+
+df_plot = data.frame(count = sort(phyloseq::sample_sums(ps))) %>% 
+  rownames_to_column("sample") %>% 
+  mutate(exp = gsub(".*_", "", sample)) %>% 
+  mutate(exp = gsub("\\..*", "", exp)) %>%
+  mutate(sample_id = gsub(".*_", "", sample)) %>% 
+  left_join(df_meta, by = "sample_id") %>% 
+  mutate(sample_id = gsub(".*_", "", sample_id)) %>% 
+  arrange(day) %>% 
+  mutate(sample_id = factor(sample_id, levels = unique(sample_id))) 
+
+plot = df_plot %>% 
+  ggplot(aes(x = sample_id, y = count, fill = condition)) +
+  geom_col() +
+  geom_hline(yintercept = readcounts_cutoff, linetype="dashed", color = "red") +
+  theme_bw() +
+  scale_x_discrete(guide = guide_axis(angle = 90)) +
+  scale_y_continuous(breaks = seq(0,  max(phyloseq::sample_sums(ps)), 2000)) +
+  labs(x="", y="Count", caption = "Samples with count below the threshold will be filtered.\nFacets are days.") +
+  facet_grid(~day, scales = "free_x", space = "free_x")
+
+
+ps = phyloseq::subset_samples(ps, phyloseq::sample_sums(ps) > readcounts_cutoff)
+mat_otu = as(otu_table(ps), "matrix")
+plot
+
+```
+
+## Sparse Features Filter
+```{r}
+mat_otu = as(otu_table(ps), "matrix")
+mat_otu = sparse_features_filter(mat_otu, cutoff = 0)
+plot_sparse_features(mat_otu, 0, 100, 5, cutoff = sparse_features_cutoff)
+mat_otu = sparse_features_filter(mat_otu, cutoff = sparse_features_cutoff)
+
+```
+
+## Prevalence filter
+```{r}
+plot_prevalence_stats(mat_otu, 0, 50, prevalence_cutoff)
+mat_otu = prevalence_filter(mat_otu, prevalence_cutoff)
+```
+
+## Near-Zero Variance filter
+```{r}
+temp = nzv_filter(mat_otu)
+temp[[1]]
+# mat_otu = temp[[2]]
+# print(temp[[3]])
+
+cat("NZV filter not used\n")
+
+```
+
+## Rarefaction
+```{r, message=F, warning=F, fig.height=7, fig.width=15}
+
+otu_table(ps) = otu_table(mat_otu, taxa_are_rows = F)
+
+
+# Convert otu table to taxa as rows
+ps_mirl = ps
+ps_original = ps
+temp = as(otu_table(ps_mirl), "matrix")
+otu_table(ps_mirl) = otu_table(t(temp), taxa_are_rows = T)
+
+rarefy_whole_rep = rarefy_whole_rep(ps_mirl, rep = n_reps, set.seed = seed_value) # This will take about 14 min for 100 iterations
+
+plot_rarefaction_curve = rarefy_whole_rep %>% 
+  ggplot(aes_string(x = "LibSize", y = "ObsASVCount", colour = "Sample")) +
+  geom_line() + 
+  theme_bw() + 
+  scale_y_continuous(limits = c(0, max(rarefy_whole_rep$ObsASVCount) * 1.01)) +
+  scale_x_continuous(breaks = seq(0,  max(rarefy_whole_rep$LibSize) * 1.01, 2000)) +
+  theme(legend.position="none") +
+  guides(x =  guide_axis(angle = 45))
+
+
+plot_rarefaction_curve
+```
+
+```{r}
+cat("Selected library size for rarefaction:", lib_size_cutoff, "\n")
+cat("Following samples are below the selected library size cutoff:\n")
+phyloseq::sample_sums(ps_mirl)[phyloseq::sample_sums(ps_mirl) < lib_size_cutoff]
+
+mirl_object = mirl(ps_mirl, libsize = lib_size_cutoff, rep = n_reps, set.seed = seed_value)
+```
+
+# Alpha Diversity
+
+```{r fig.height=5, fig.width=15}
+
+df_alphadiv_shannon = alphadivDF(mirl_object, diversity = "shannon")
+plot = plot_richness(mirl_object[[1]], x = "mouse", measures = "Chao1", color = "condition") 
+
+df_alphadiv = rbind(
+  df_alphadiv_shannon %>% 
+    dplyr::select(sample_id, day, condition, DiversityIndex) %>% 
+    mutate(div_type = "Shannon Index"),
+  plot$data %>%
+  dplyr::select(sample_id, day, condition, DiversityIndex=value) %>% 
+  mutate(div_type = "Chao1 Index"))
+
+# This dataframe was used to generate Fig 3D
+
+```
+
+
+# Beta Diversity
+
+```{r, warning=F, message=F, results='hide'}
+
+df_bray_pcoa = list()
+for(i in 1:n_reps)
+{
+  set.seed(seed_value)
+  ps = mirl_object[[i]]
+  
+  # PCoA   
+  ord_bray_pcoa = ordinate(ps, method = "PCoA", distance = "bray")
+  df_bray_pcoa[[i]] = plot_ordination(ps, ord_bray_pcoa, justDF = T) %>% 
+    rownames_to_column("sample") %>% 
+    mutate(rep = as.character(i)) %>% 
+    mutate(per_var1 = ord_bray_pcoa$values$Relative_eig[1]*100,
+           per_var2 = ord_bray_pcoa$values$Relative_eig[2]*100)
+  
+}
+
+df_bray_pcoa = bind_rows(df_bray_pcoa) %>% 
+  mutate(day = factor(day, levels = unique(day))) %>% 
+  mutate(condition = factor(condition, levels = unique(condition)))
+                        
+```
+
+```{r, warning=F, message=F, echo=F, fig.width=10, fig.height=5}
+
+
+means = df_bray_pcoa %>% 
+  group_by(condition,day) %>% 
+  summarize(Axis.1 = mean(Axis.1),
+            Axis.2 = mean(Axis.2)) %>% 
+  mutate(sample_id = "mean") %>% 
+  mutate(flag = "mean")
+
+df = rbind(
+  df_bray_pcoa %>% 
+    mutate(flag = "sample") %>% 
+    select(sample_id, condition,day, flag, Axis.1, Axis.2),
+  means) %>% 
+  filter(day %in% c(0,7,10,16)) 
+
+# This dataframe was used to generate Fig 3E
+
+df %>% 
+  ggplot(aes(x = Axis.1, y = Axis.2, color = condition, shape = day, alpha = flag)) +
+  geom_point(size=3) +
+  scale_alpha_discrete(range = c(1, 0.3)) +
+  #stat_ellipse() +
+  theme_bw() +
+  theme(panel.grid = element_blank()) +
+  ggtitle("Bray-Curtis PCoA") +
+  labs(x = paste0("Axis 1 (", round(mean(df_bray_pcoa$per_var1)), "%)"),
+       y = paste0("Axis 2 (", round(mean(df_bray_pcoa$per_var2)), "%)"),
+       color = "Group")
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+

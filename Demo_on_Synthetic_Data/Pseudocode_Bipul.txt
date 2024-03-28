@@ -1,0 +1,151 @@
+Pseudo Codes:
+____________________________________
+|## Python Version - 3.9.12         |
+|## Scipy Version - 1.7.3           |
+|## Matplotlib Version -  3.5.1     |
+|## Scikit-learn Version - 1.0.2    |
+|## numpy Version -  1.21.6         |
+|## Pandas Version - 1.4.2          |
+-------------------------------------
+
+
+A. ------------------------------------  RF Model for Metabolites: ----------------------------------------
+Goal: Prediction of  KP load given Metabolite Z scores of a given experiment.
+Method: Random Forest Models.
+------------------------------------------------------------------------------------------------------------
+
+	1. Read the file containing the Metabolite Z score and KP Load measurement at 120 Hours
+
+	2. Separate the Metabolite Z Score matrix and the KP Load measurement into different arrays
+	
+	3. Regularize the KP Loads by adding a small positive number (~10) so that the Logarithm is well-defined at low KP loads. We don’t want       finite number fluctuations dominating at low KP concentrations.
+
+	4. Split the dataset into Training and Testing sets making sure that the experiments with extreme KP loads(lowest and highest) are always       in the Training set.
+
+	5. Initialize the Random Forest (RF) model (from sklearn) with the desired number of trees (We used 10000 trees) and train them on the           Training set to predict the Log(KP loads) of the training set.
+
+	6. Using this RF model, predict the log(KP loads) of the Test set.
+
+	7. Compute the R^2 value to evaluate the goodness of the RF model for both training and test set.
+	
+	8. Plot the Comparison curve of RF with the Actual Log[KP CFU] on the X-axis and the Predicted Log[KP CFU] on the Y-axis.
+
+	9. Use this RF Model to predict the Log[KP CFU] of the 60 Out-of-sample experiments.
+
+	10. Compute the R^2 value to evaluate the goodness of the RF model for the Out-of-sample experiments.
+
+
+
+	The details of other RF model parameters as well as the training-test split are provided in the submitted code. Construction of the RF model for the strains also follows similar steps.
+
+_____________________________________________________________________________________________________________________________________
+-------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+
+B. ------------------- Metabolite Space Principal Component Landscape Construction: -----------------------------
+Goal: Visualization of the Metabolite -KP load landscape.
+Method: PCA decomposition, projection onto the first two PCs, and linear interpolation.
+-----------------------------------------------------------------------------------------------------------------
+
+Step 1.  Reading the Dataset and Partitioning it into relevant data and labels:
+
+      1.1 - We first read the file containing the metabolite Z-scores and the KP loads at the end of 120 hours. This data is in the file with the following name  - {Metabolite_120_Hr_dataset.csv} in the "Datasets" folder.
+      
+      1.2 - We then create separate arrays containing the respective community names, metabolite names, KP loads and the metabolite concentration matrix. 
+      
+      1.3 - The addition of a Small Regularization (~10) to KP CFU is necessary since we will be dealing with the Log of KP CFU (and Log(0) is undefined). 
+      
+      
+
+Step 2.  Principal Component Analysis:
+
+     2.1. Data Clean Up: 
+
+        For the PCA, we first need to mean-center and normalize the data. This means the following:
+        - We need to subtract the column-wise mean of this data
+        - Then we need to normalize this data.
+        - As in column sum after normalization = 0
+        - Mean subtracted, normalized matrix is as follows:
+
+    
+    2.2 Components Set up and PCA Calculation:
+        -There are 118 metabolite features and 81 communities in the Datamatrix. 
+        -In Principal, we can have min(118,81)=81 components in the PCA.  
+        -The contributions of high PCs are too small. Hence, we set the N_components to 50.
+        
+
+    2.3 Projection of the data to the first two Principal Components and visualization: 
+        - Find the X and Y coordinates of all experiments in PC-1/PC-2 space.
+
+
+    2.4 Construction of the surface plots for the Metabolite landscape in PC-1 /PC-2 space:
+    
+    The steps are as follows:
+        - X and Y axes are PC-1 and PC-2 axes. The Z-axis is for the KP suppression. 
+        - Construct a mesh grid large enough to capture all the experiments visualized in PC-1, and PC-2 space. 
+    
+        - For each point(x,y) in this mesh grid, compute the KP suppression (z coordinate) using linear interpolation between the actual experiments whose coordinates were found in step 2.3
+
+    2.5 Visualization of the Landscape:
+        - plot the (x,y,z) of the mesh grid found in step 2.4 as a 2D aerial view or a 3D hillside view.
+
+
+The details of the variables used in these steps are given in the demo notebook.
+-------------------------------------------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+
+C. ----------------------------- Strain Space Principal component Landscape Construction: -------------------------------------
+Goal: Visualization of the Strain presence/absence- KP load landscape.
+Method: PCA decomposition, projection onto the first two PCs, and linear interpolation.
+--------------------------------------------------------------------------------------------------------------------------------
+Step 1.  Reading the Dataset and Partitioning it into relevant data and labels:
+
+        1.1-  We first read the file containing the strain presence/absence and the KP loads at the end of 120 hours. This data is in the file with the following name - {consortia_taxa_presence_and_KPCFUs.csv} in the "Datasets" folder.
+        
+        1.2- We then create separate arrays containing the respective community names, Strain names, KP loads, and the strain presence-absence matrix.
+        
+        1.3- The strain presence-absence matrix is a one-hot-encoded matrix where 1 represents the presence of a strain and 0 represents its absence.
+        1.4 - The addition of a Small Regularization (~10) to KP CFU is necessary since we will be dealing with the Log of KP CFU (and Log(0) is undefined). 
+      
+      
+
+Step 2.  Principal Component Analysis:
+
+     2.1. Data Clean Up: 
+
+        For the PCA, we first need to mean-center and normalize the data. This means the following:
+        - We need to subtract the column-wise mean of this data
+        - Then we need to normalize this data.
+        - As in column sum after normalization = 0
+        - Mean subtracted, normalized matrix is as follows:
+
+    
+    2.2 Components Set up and PCA Calculation:
+        - There are 46 strains (not counting KP) and 96 experiments. 
+        - Hence, we set the N_components to 46.
+        
+
+    2.3 Projection of the data to the first two Principal Components and visualization: 
+        - Find the X and Y coordinates of all experiments in PC-1/PC-2 space.
+
+
+    2.4 Construction of the surface plots for the Strain landscape in PC-1 /PC-2 space:
+    
+    The steps are as follows:
+        - X and Y axes are PC-1 and PC-2 axes. The Z-axis is for the KP suppression. 
+        - Construct a mesh grid large enough to capture all the experiments visualized in PC-1, and PC-2 space. 
+    
+        - For each point(x,y) in this mesh grid, compute the KP suppression (z coordinate) using linear interpolation between the actual experiments whose coordinates were found in step 2.3
+
+    2.5 Visualization of the Landscape:
+        - plot the (x,y,z) of the mesh grid found in step 2.4 as a 2D aerial view or a 3D hillside view.
+
+
+The details of the variables used in these steps are given in the demo notebook.
+
+__________________________________________________________________________________________________________________

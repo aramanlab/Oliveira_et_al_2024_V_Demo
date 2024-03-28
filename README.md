@@ -20,15 +20,14 @@ _____________________________________________________________________________
 This repository contains the following datasets:
 ____________________________________________________________________________
 
-1. PCA_coordinates_Metabolite_space_original_81.csv -------       [Metabolite_Space_Principal_component_landscape.ipynb => Output]
-2. PCA_coordinates_Strain_Presence_Absence_Space_Original_96.csv -------   [Strain_Space_Principal_component_landscape.ipynb => Output] 
+1. PCA_coordinates_Metabolite_space_original_81_actual.csv -------       [Metabolite_Space_Principal_component_landscape.ipynb => Output]
+2. PCA_coordinates_Strain_Presence_Absence_Space_Original_96_actual.csv -------   [Strain_Space_Principal_component_landscape.ipynb => Output] 
 3. Strain_pool_66_DFI_with_umap_coordinates.xlsx-------     [Input =>  Umap_based_design_of_96_communities.R]
-4. Initial_96_community.xlsx -------         [Input => RF_model_on_strains.ipynb] 
-5. Validation_60_Communities.xlsx  -------   [Input => RF_model_on_strains.ipynb]
-6. metadata_16s.xlsx --------                [Input => Fig3D_and_3E.Rmd]
-8. metadata_16s.xlsx--------                [Input => Fig3F_taxplot.R]
-8. 16S_phyloseq.rds --------                [Input => Fig3D_and_3E.Rmd]
-9. 16S_otu_pctseqs.csv-------               [Input => Fig3F_taxplot.R]
+4. Validation_60_Communities.xlsx  -------   [Input => RF_model_on_strains.ipynb]
+5. metadata_16s.xlsx --------                [Input => Fig3D_and_3E.Rmd]
+6. metadata_16s.xlsx--------                [Input => Fig3F_taxplot.R]
+7. 16S_phyloseq.rds --------                [Input => Fig3D_and_3E.Rmd]
+8. 16S_otu_pctseqs.csv-------               [Input => Fig3F_taxplot.R]
 
 ___________________________________________________________________
 #### Upon Publication, the repository will also contain:

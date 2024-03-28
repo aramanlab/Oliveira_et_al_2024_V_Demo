@@ -6,10 +6,10 @@ ____________________________________________________________________________
 #### Installation:
 
 1. In your terminal type and execute the following:
-          git clone https://github.com/aramanlab/Oliveira_et_al_2024.git
+          git clone https://github.com/aramanlab/Oliveira_et_al_2024_ver_2.git
 
 
-2. Alternatively, go to the link https://github.com/aramanlab/Oliveira_et_al_2024.git. And download the zip file.
+2. Alternatively, go to the link https://github.com/aramanlab/Oliveira_et_al_2024_ver_2.git. And download the zip file.
 
 Installation/Download Time: 1 minute. 
 
